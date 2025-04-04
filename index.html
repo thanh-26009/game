@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Tài Xỉu</title>
+    <style>
+        body { text-align: center; font-family: Arial, sans-serif; }
+        .dice-container { display: flex; justify-content: center; margin: 20px; }
+        .dice { font-size: 50px; margin: 10px; }
+        .result { font-size: 24px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Game Tài Xỉu</h1>
+    <p>Số dư: <span id="balance">1000</span> xu</p>
+    <div class="dice-container">
+        <span class="dice" id="dice1">🎲</span>
+        <span class="dice" id="dice2">🎲</span>
+        <span class="dice" id="dice3">🎲</span>
+    </div>
+    <button onclick="playGame('tai')">Chọn Tài (11-17)</button>
+    <button onclick="playGame('xiu')">Chọn Xỉu (4-10)</button>
+    <p class="result" id="result"></p>
+    <script>
+        let balance = 1000;
+
+        function rollDice() {
+            return Math.floor(Math.random() * 6) + 1;
+        }
+
+        function playGame(choice) {
+            let d1 = rollDice();
+            let d2 = rollDice();
+            let d3 = rollDice();
+            let total = d1 + d2 + d3;
+            
+            document.getElementById('dice1').textContent = `🎲 ${d1}`;
+            document.getElementById('dice2').textContent = `🎲 ${d2}`;
+            document.getElementById('dice3').textContent = `🎲 ${d3}`;
+            
+            let resultText = `Kết quả: ${total} - `;
+            if ((total >= 11 && choice === 'tai') || (total <= 10 && choice === 'xiu')) {
+                resultText += 'Bạn thắng! +100 xu';
+                balance += 100;
+            } else {
+                resultText += 'Bạn thua! -100 xu';
+                balance -= 100;
+            }
+            document.getElementById('result').textContent = resultText;
+            document.getElementById('balance').textContent = balance;
+        }
+    </script>
+</body>
+</html>
