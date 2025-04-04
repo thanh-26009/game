@@ -20,12 +20,25 @@
             padding: 30px;
             border-radius: 15px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-            width: 500px;
+            width: 600px;
         }
         h1 {
             color: #333;
         }
-        button {
+        .bet-options button {
+            padding: 8px 15px;
+            margin: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        .bet-options button:hover {
+            background-color: #2980b9;
+        }
+        .game-buttons button {
             padding: 12px 25px;
             margin: 10px;
             font-size: 18px;
@@ -36,11 +49,11 @@
             border-radius: 8px;
             transition: transform 0.2s;
         }
-        button:hover {
+        .game-buttons button:hover {
             transform: scale(1.05);
             background-color: #ff4d4d;
         }
-        #result, #score {
+        #result, #score, #balance {
             margin-top: 20px;
             font-size: 18px;
             color: #555;
@@ -67,9 +80,21 @@
 <body>
     <div class="container">
         <h1>Trò Chơi Tài Xỉu</h1>
+        <div id="balance">Số dư: 10000</div>
+        <p>Chọn số tiền cược:</p>
+        <div class="bet-options">
+            <button onclick="setBet(1000)">1k</button>
+            <button onclick="setBet(2000)">2k</button>
+            <button onclick="setBet(5000)">5k</button>
+            <button onclick="setBet(10000)">10k</button>
+            <button onclick="addZero()">+0</button>
+        </div>
+        <p>Số tiền cược hiện tại: <span id="current-bet">0</span></p>
         <p>Chọn "Tài" (tổng > 10) hoặc "Xỉu" (tổng ≤ 10)</p>
-        <button onclick="playGame('tai')">Tài</button>
-        <button onclick="playGame('xiu')">Xỉu</button>
+        <div class="game-buttons">
+            <button onclick="playGame('tai')">Tài</button>
+            <button onclick="playGame('xiu')">Xỉu</button>
+        </div>
         <div id="result"></div>
         <div id="score">Thắng: 0 | Thua: 0</div>
         <div id="history">
@@ -81,17 +106,44 @@
         // Khởi tạo từ localStorage hoặc mặc định
         let wins = parseInt(localStorage.getItem("wins")) || 0;
         let losses = parseInt(localStorage.getItem("losses")) || 0;
+        let balance = parseInt(localStorage.getItem("balance")) || 10000; // Số dư ban đầu 10k
         let history = JSON.parse(localStorage.getItem("history")) || [];
+        let currentBet = 0;
 
         // Cập nhật giao diện ban đầu
+        document.getElementById("balance").innerHTML = `Số dư: ${balance}`;
         document.getElementById("score").innerHTML = `Thắng: ${wins} | Thua: ${losses}`;
+        document.getElementById("current-bet").innerHTML = currentBet;
         updateHistoryUI();
 
         function rollDice() {
             return Math.floor(Math.random() * 6) + 1;
         }
 
+        function setBet(amount) {
+            if (amount <= balance) {
+                currentBet = amount;
+                document.getElementById("current-bet").innerHTML = currentBet;
+            } else {
+                alert("Số dư không đủ để đặt cược!");
+            }
+        }
+
+        function addZero() {
+            if (currentBet * 10 <= balance) {
+                currentBet *= 10;
+                document.getElementById("current-bet").innerHTML = currentBet;
+            } else {
+                alert("Số dư không đủ để tăng cược!");
+            }
+        }
+
         function playGame(choice) {
+            if (currentBet === 0) {
+                alert("Vui lòng chọn số tiền cược trước khi chơi!");
+                return;
+            }
+
             // Quay 3 xúc xắc
             let dice1 = rollDice();
             let dice2 = rollDice();
@@ -102,10 +154,12 @@
             let result = (total > 10) ? "Tài" : "Xỉu";
             let userWon = (choice === "tai" && total > 10) || (choice === "xiu" && total <= 10);
 
-            // Cập nhật điểm số
+            // Cập nhật số dư và điểm số
             if (userWon) {
+                balance += currentBet;
                 wins++;
             } else {
+                balance -= currentBet;
                 losses++;
             }
 
@@ -115,28 +169,42 @@
                 <div class="dice">🎲 ${dice1} - ${dice2} - ${dice3}</div>
                 Tổng: ${total} - ${result} <br>
                 Bạn chọn: ${choice === "tai" ? "Tài" : "Xỉu"} <br>
-                Kết quả: ${userWon ? "Thắng! 🎉" : "Thua! 😢"}
+                Kết quả: ${userWon ? "Thắng! 🎉 +" + currentBet : "Thua! 😢 -" + currentBet}
             `;
 
-            // Cập nhật điểm số
-            let scoreDiv = document.getElementById("score");
-            scoreDiv.innerHTML = `Thắng: ${wins} | Thua: ${losses}`;
+            // Cập nhật số dư và điểm số
+            document.getElementById("balance").innerHTML = `Số dư: ${balance}`;
+            document.getElementById("score").innerHTML = `Thắng: ${wins} | Thua: ${losses}`;
 
             // Thêm vào lịch sử
             let historyEntry = `
                 Lần chơi: Xúc xắc ${dice1}-${dice2}-${dice3} | Tổng: ${total} (${result}) | 
-                Bạn chọn: ${choice === "tai" ? "Tài" : "Xỉu"} | ${userWon ? "Thắng" : "Thua"}
+                Cược: ${currentBet} | Bạn chọn: ${choice === "tai" ? "Tài" : "Xỉu"} | 
+                ${userWon ? "Thắng +" + currentBet : "Thua -" + currentBet}
             `;
-            history.unshift(historyEntry); // Thêm vào đầu mảng
-            if (history.length > 50) history.pop(); // Giới hạn 50 kết quả
+            history.unshift(historyEntry);
+            if (history.length > 50) history.pop();
 
             // Lưu vào localStorage
             localStorage.setItem("wins", wins);
             localStorage.setItem("losses", losses);
+            localStorage.setItem("balance", balance);
             localStorage.setItem("history", JSON.stringify(history));
+
+            // Reset cược sau mỗi lần chơi
+            currentBet = 0;
+            document.getElementById("current-bet").innerHTML = currentBet;
 
             // Cập nhật giao diện lịch sử
             updateHistoryUI();
+
+            // Kiểm tra số dư
+            if (balance <= 0) {
+                alert("Bạn đã hết tiền! Số dư sẽ được reset về 10,000.");
+                balance = 10000;
+                localStorage.setItem("balance", balance);
+                document.getElementById("balance").innerHTML = `Số dư: ${balance}`;
+            }
         }
 
         function updateHistoryUI() {
