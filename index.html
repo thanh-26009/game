@@ -3,68 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Tài Xỉu</title>
+    <title>Trò Chơi Tài Xỉu Nâng Cao</title>
     <style>
-        body { 
-            text-align: center; 
-            font-family: Arial, sans-serif; 
-            background-color: black; 
-            color: white;
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #74ebd5, #acb6e5);
+            margin: 0;
         }
-        .dice-container { display: flex; justify-content: center; margin: 20px; }
-        .dice { font-size: 50px; margin: 10px; }
-        .result { font-size: 24px; margin-top: 20px; }
-        .bet-container { margin: 20px; }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            width: 500px;
+        }
+        h1 {
+            color: #333;
+        }
+        button {
+            padding: 12px 25px;
+            margin: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: #ff6f61;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+            background-color: #ff4d4d;
+        }
+        #result, #score {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #555;
+        }
+        .dice {
+            font-size: 40px;
+            margin: 10px;
+        }
+        #history {
+            margin-top: 20px;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        #history p {
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
-    <h1>Game Tài Xỉu</h1>
-    <p>Số dư: <span id="balance">1000</span> xu</p>
-    <div class="bet-container">
-        <label for="betAmount">Số tiền cược: </label>
-        <input type="number" id="betAmount" value="100" min="10" max="1000">
+    <div class="container">
+        <h1>Trò Chơi Tài Xỉu</h1>
+        <p>Chọn "Tài" (tổng > 10) hoặc "Xỉu" (tổng ≤ 10)</p>
+        <button onclick="playGame('tai')">Tài</button>
+        <button onclick="playGame('xiu')">Xỉu</button>
+        <div id="result"></div>
+        <div id="score">Thắng: 0 | Thua: 0</div>
+        <div id="history">
+            <strong>Lịch sử kết quả:</strong>
+        </div>
     </div>
-    <div class="dice-container">
-        <span class="dice" id="dice1">🎲</span>
-        <span class="dice" id="dice2">🎲</span>
-        <span class="dice" id="dice3">🎲</span>
-    </div>
-    <button onclick="playGame('tai')">Chọn Tài (11-17)</button>
-    <button onclick="playGame('xiu')">Chọn Xỉu (4-10)</button>
-    <p class="result" id="result"></p>
+
     <script>
-        let balance = 1000;
+        // Khởi tạo từ localStorage hoặc mặc định
+        let wins = parseInt(localStorage.getItem("wins")) || 0;
+        let losses = parseInt(localStorage.getItem("losses")) || 0;
+        let history = JSON.parse(localStorage.getItem("history")) || [];
+
+        // Cập nhật giao diện ban đầu
+        document.getElementById("score").innerHTML = `Thắng: ${wins} | Thua: ${losses}`;
+        updateHistoryUI();
 
         function rollDice() {
             return Math.floor(Math.random() * 6) + 1;
         }
 
         function playGame(choice) {
-            let betAmount = parseInt(document.getElementById('betAmount').value);
-            if (betAmount > balance || betAmount <= 0) {
-                alert("Số tiền cược không hợp lệ!");
-                return;
+            // Quay 3 xúc xắc
+            let dice1 = rollDice();
+            let dice2 = rollDice();
+            let dice3 = rollDice();
+            let total = dice1 + dice2 + dice3;
+
+            // Xác định kết quả
+            let result = (total > 10) ? "Tài" : "Xỉu";
+            let userWon = (choice === "tai" && total > 10) || (choice === "xiu" && total <= 10);
+
+            // Cập nhật điểm số
+            if (userWon) {
+                wins++;
+            } else {
+                losses++;
             }
 
-            let d1 = rollDice();
-            let d2 = rollDice();
-            let d3 = rollDice();
-            let total = d1 + d2 + d3;
-            
-            document.getElementById('dice1').textContent = `🎲 ${d1}`;
-            document.getElementById('dice2').textContent = `🎲 ${d2}`;
-            document.getElementById('dice3').textContent = `🎲 ${d3}`;
-            
-            let resultText = `Kết quả: ${total} - `;
-            if ((total >= 11 && choice === 'tai') || (total <= 10 && choice === 'xiu')) {
-                resultText += `Bạn thắng! +${betAmount} xu`;
-                balance += betAmount;
-            } else {
-                resultText += `Bạn thua! -${betAmount} xu`;
-                balance -= betAmount;
-            }
-            document.getElementById('result').textContent = resultText;
-            document.getElementById('balance').textContent = balance;
+            // Hiển thị kết quả hiện tại
+            let resultDiv = document.getElementById("result");
+            resultDiv.innerHTML = `
+                <div class="dice">🎲 ${dice1} - ${dice2} - ${dice3}</div>
+                Tổng: ${total} - ${result} <br>
+                Bạn chọn: ${choice === "tai" ? "Tài" : "Xỉu"} <br>
+                Kết quả: ${userWon ? "Thắng! 🎉" : "Thua! 😢"}
+            `;
+
+            // Cập nhật điểm số
+            let scoreDiv = document.getElementById("score");
+            scoreDiv.innerHTML = `Thắng: ${wins} | Thua: ${losses}`;
+
+            // Thêm vào lịch sử
+            let historyEntry = `
+                Lần chơi: Xúc xắc ${dice1}-${dice2}-${dice3} | Tổng: ${total} (${result}) | 
+                Bạn chọn: ${choice === "tai" ? "Tài" : "Xỉu"} | ${userWon ? "Thắng" : "Thua"}
+            `;
+            history.unshift(historyEntry); // Thêm vào đầu mảng
+            if (history.length > 50) history.pop(); // Giới hạn 50 kết quả
+
+            // Lưu vào localStorage
+            localStorage.setItem("wins", wins);
+            localStorage.setItem("losses", losses);
+            localStorage.setItem("history", JSON.stringify(history));
+
+            // Cập nhật giao diện lịch sử
+            updateHistoryUI();
+        }
+
+        function updateHistoryUI() {
+            let historyDiv = document.getElementById("history");
+            historyDiv.innerHTML = `<strong>Lịch sử kết quả:</strong><br>` + 
+                history.map(entry => `<p>${entry}</p>`).join("");
         }
     </script>
 </body>
