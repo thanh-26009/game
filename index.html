@@ -81,7 +81,7 @@
     <div class="container">
         <h1>Trò Chơi Tài Xỉu</h1>
         <div id="balance">Số dư: 10000</div>
-        <p>Chọn số tiền cược:</p>
+        <p>Chọn số tiền cược (tối thiểu 1k):</p>
         <div class="bet-options">
             <button onclick="setBet(1000)">1k</button>
             <button onclick="setBet(2000)">2k</button>
@@ -130,8 +130,13 @@
         }
 
         function addZero() {
-            if (currentBet * 10 <= balance) {
-                currentBet *= 10;
+            if (currentBet === 0) {
+                alert("Vui lòng chọn mức cược trước khi thêm số 0!");
+                return;
+            }
+            let newBet = currentBet * 10;
+            if (newBet <= balance) {
+                currentBet = newBet;
                 document.getElementById("current-bet").innerHTML = currentBet;
             } else {
                 alert("Số dư không đủ để tăng cược!");
@@ -139,8 +144,8 @@
         }
 
         function playGame(choice) {
-            if (currentBet === 0) {
-                alert("Vui lòng chọn số tiền cược trước khi chơi!");
+            if (currentBet < 1000) {
+                alert("Vui lòng đặt cược tối thiểu 1k để chơi!");
                 return;
             }
 
